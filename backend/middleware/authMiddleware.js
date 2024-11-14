@@ -2,23 +2,47 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User'); // Ensure this path is correct
 
 const authMiddleware = async (req, res, next) => {
+  // Get token from the Authorization header
   const token = req.header("Authorization")?.replace("Bearer ", "");
 
+  // If no token is provided, return a 401 Unauthorized response
   if (!token) {
     return res.status(401).json({ message: "No token provided" });
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET); // Replace with your secret key
-    const user = await User.findById(decoded.id); // Find user by the ID from the token payload
+
+    // Verify the token using your secret key
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Find the user associated with the ID from the decoded token
+    const user = await User.findById(decoded.userId); // Assuming the token contains 'userId'
+
+    // If no user is found, return a 401 Unauthorized response
     if (!user) {
       return res.status(401).json({ message: "User not found" });
     }
-    req.user = user; // Attach the user object to req.user
-    next(); // Call next to pass control to the next middleware (your route handler)
+
+    // Attach the user to the request object for further use
+    req.user = user;
+
+    // Proceed to the next middleware or route handler
+    next();
   } catch (error) {
-    console.error(error); // Log any errors
-    res.status(401).json({ message: "Invalid token" }); // Return an error if the token is invalid
+    // Differentiate errors for clarity
+    if (error.name === 'JsonWebTokenError') {
+      console.error("JWT Verification Error:", error.message);
+      return res.status(401).json({ message: "Invalid token" });
+    }
+
+    if (error.name === 'TokenExpiredError') {
+      console.error("Token expired:", error.message);
+      return res.status(401).json({ message: "Token expired" });
+    }
+
+    // Log other errors for debugging
+    console.error("Server Error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 

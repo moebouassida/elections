@@ -37,14 +37,6 @@ exports.register = async (req, res) => {
     // Save the user to the database
     await user.save();
 
-    // Generate JWT (with a secret key and payload)
-    const payload = { id: user._id };
-    
-    // Generate token
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1h" });
-
-    // Log the token for debugging
-    console.log("Generated token:", token);
 
     // Send response with JWT
     res.status(201).json({
@@ -54,9 +46,7 @@ exports.register = async (req, res) => {
         prenom: user.prenom,
         email: user.email,
         favorites: user.favorites,
-      },
-      token: token,  // Include the JWT in the response
-    });
+      }});
   } catch (error) {
     console.error("Error creating user:", error);
     res.status(500).json({ message: "Server error", error: error.message });
@@ -73,7 +63,7 @@ exports.login = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
     res.json({ message: "Login successful", token });
   } catch (error) {

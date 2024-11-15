@@ -60,7 +60,7 @@ exports.deleteCandidate = async (req, res) => {
 
 exports.searchCandidates = async (req, res) => {
   try {
-    const { query } = req.body; // Get search term from request body
+    const { query } = req.query; // Get search term from query params
     const candidates = await Candidate.find({
       $or: [
         { nom: { $regex: query, $options: "i" } }, // Case-insensitive search
@@ -73,6 +73,5 @@ exports.searchCandidates = async (req, res) => {
     res.status(500).json({ message: "Error searching candidates", error });
   }
 };
-
 
 
